@@ -1,0 +1,9 @@
+﻿process.env.NODE_ENV = 'test';
+process.env.PORT = '3001';
+process.env.API_KEY = 'test-api-key';
+process.env.CMC_API_KEY = 'test-cmc-key';
+process.env.CMC_BASE_URL = 'https://pro-api.coinmarketcap.com';
+process.env.CMC_TIMEOUT_MS = '5000';
+process.env.DEFAULT_CURRENCY = 'USD';
+process.env.SYNC_INTERVAL_MS = '60000';
+process.env.DB_PATH = ':memory:';

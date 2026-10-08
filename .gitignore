@@ -1,0 +1,8 @@
+﻿node_modules/
+dist/
+coverage/
+.env
+*.sqlite
+*.sqlite3
+data/
+.idea/
