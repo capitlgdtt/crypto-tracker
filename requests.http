@@ -1,0 +1,135 @@
+﻿@baseUrl = http://localhost:3000
+@apiKey = dev-secret-key
+@contentType = application/json
+@cryptoId = 4
+
+### Health check
+GET {{baseUrl}}/health
+
+### Unknown route
+GET {{baseUrl}}/unknown
+
+### List cryptocurrencies without auth (expect 401)
+GET {{baseUrl}}/api/cryptocurrencies
+
+### List cryptocurrencies with auth (expect 200)
+GET {{baseUrl}}/api/cryptocurrencies
+Authorization: Bearer {{apiKey}}
+
+### Create BTC (expect 201 or 409 if already exists)
+POST {{baseUrl}}/api/cryptocurrencies
+Authorization: Bearer {{apiKey}}
+Content-Type: {{contentType}}
+
+{
+  "symbol": "BTC",
+  "name": "Bitcoin"
+}
+
+### Create ETH (expect 201 or 409 if already exists)
+POST {{baseUrl}}/api/cryptocurrencies
+Authorization: Bearer {{apiKey}}
+Content-Type: {{contentType}}
+
+{
+  "symbol": "ETH",
+  "name": "Ethereum"
+}
+
+### Create duplicate BTC in lowercase (expect 409)
+POST {{baseUrl}}/api/cryptocurrencies
+Authorization: Bearer {{apiKey}}
+Content-Type: {{contentType}}
+
+{
+  "symbol": "btc",
+  "name": "Bitcoin again"
+}
+
+### Create with invalid symbol (expect 400)
+POST {{baseUrl}}/api/cryptocurrencies
+Authorization: Bearer {{apiKey}}
+Content-Type: {{contentType}}
+
+{
+  "symbol": "b",
+  "name": ""
+}
+
+### Create with missing body (expect 400)
+POST {{baseUrl}}/api/cryptocurrencies
+Authorization: Bearer {{apiKey}}
+Content-Type: {{contentType}}
+
+{}
+
+### Get by id (expect 200)
+GET {{baseUrl}}/api/cryptocurrencies/{{cryptoId}}
+Authorization: Bearer {{apiKey}}
+
+### Get by non-existent id (expect 404)
+GET {{baseUrl}}/api/cryptocurrencies/9999
+Authorization: Bearer {{apiKey}}
+
+### Get by invalid id (expect 400)
+GET {{baseUrl}}/api/cryptocurrencies/abc
+Authorization: Bearer {{apiKey}}
+
+### Update name (expect 200)
+PATCH {{baseUrl}}/api/cryptocurrencies/{{cryptoId}}
+Authorization: Bearer {{apiKey}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Ethereum Updated"
+}
+
+### Update with empty body (expect 400)
+PATCH {{baseUrl}}/api/cryptocurrencies/{{cryptoId}}
+Authorization: Bearer {{apiKey}}
+Content-Type: {{contentType}}
+
+{}
+
+### Delete crypto (expect 204) — run manually, will delete the tracked crypto
+DELETE {{baseUrl}}/api/cryptocurrencies/{{cryptoId}}
+Authorization: Bearer {{apiKey}}
+
+### List after operations (expect 200)
+GET {{baseUrl}}/api/cryptocurrencies
+Authorization: Bearer {{apiKey}}
+
+### Latest prices for all tracked (expect 200)
+GET {{baseUrl}}/api/prices/latest
+Authorization: Bearer {{apiKey}}
+
+### Latest prices filtered by symbols (expect 200)
+GET {{baseUrl}}/api/prices/latest?symbols=BTC,ETH
+Authorization: Bearer {{apiKey}}
+
+### List cryptocurrencies
+GET {{baseUrl}}/api/cryptocurrencies
+Authorization: Bearer {{apiKey}}
+
+### Price history for crypto id (expect 200)
+GET {{baseUrl}}/api/cryptocurrencies/{{cryptoId}}/prices
+Authorization: Bearer {{apiKey}}
+
+### Price history with limit (expect 200, max 2 items)
+GET {{baseUrl}}/api/cryptocurrencies/{{cryptoId}}/prices?limit=2&offset=0
+Authorization: Bearer {{apiKey}}
+
+### Price history invalid limit (expect 400)
+GET {{baseUrl}}/api/cryptocurrencies/{{cryptoId}}/prices?limit=abc
+Authorization: Bearer {{apiKey}}
+
+### Price history invalid from (expect 400)
+GET {{baseUrl}}/api/cryptocurrencies/{{cryptoId}}/prices?from=not-a-date
+Authorization: Bearer {{apiKey}}
+
+### Price history non-existent crypto (expect 404)
+GET {{baseUrl}}/api/cryptocurrencies/9999/prices
+Authorization: Bearer {{apiKey}}
+
+### Prices without auth (expect 401)
+GET {{baseUrl}}/api/prices/latest

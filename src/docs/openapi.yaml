@@ -1,0 +1,431 @@
+﻿openapi: 3.0.3
+info:
+  title: Crypto Tracker API
+  description: |
+    Backend service for tracking and aggregating cryptocurrency prices
+    via CoinMarketCap API. All /api/* endpoints require a Bearer token.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Local development
+
+tags:
+  - name: Health
+    description: Service health check
+  - name: Cryptocurrencies
+    description: Manage tracked cryptocurrencies
+  - name: Prices
+    description: Historical and latest prices
+  - name: Sync
+    description: Manual synchronization with CoinMarketCap
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: API key passed as Bearer token in the Authorization header
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              example: NOT_FOUND
+            message:
+              type: string
+              example: Cryptocurrency with id 999 not found
+            details:
+              nullable: true
+
+    Cryptocurrency:
+      type: object
+      required: [id, symbol, name, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          example: 1
+        symbol:
+          type: string
+          example: BTC
+        name:
+          type: string
+          example: Bitcoin
+        lastUpdatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-10-08T12:33:56.793Z'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CryptocurrencyCreate:
+      type: object
+      required: [symbol, name]
+      properties:
+        symbol:
+          type: string
+          pattern: '^[A-Za-z0-9]{2,10}$'
+          example: BTC
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Bitcoin
+
+    CryptocurrencyUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        symbol:
+          type: string
+          pattern: '^[A-Za-z0-9]{2,10}$'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+
+    PriceRecord:
+      type: object
+      required: [id, cryptocurrencyId, price, currency, createdAt]
+      properties:
+        id:
+          type: integer
+        cryptocurrencyId:
+          type: integer
+        price:
+          type: number
+          format: float
+        currency:
+          type: string
+          example: USD
+        createdAt:
+          type: string
+          format: date-time
+
+    LatestPrice:
+      type: object
+      required: [cryptocurrencyId, symbol, name, price, currency, createdAt]
+      properties:
+        cryptocurrencyId:
+          type: integer
+        symbol:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+          format: float
+        currency:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    SyncResult:
+      type: object
+      required: [total, updated, skipped, errors]
+      properties:
+        total:
+          type: integer
+        updated:
+          type: integer
+        skipped:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ExternalApiError:
+      description: External API error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /api/cryptocurrencies:
+    get:
+      tags: [Cryptocurrencies]
+      summary: List tracked cryptocurrencies
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of tracked cryptocurrencies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Cryptocurrency'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Cryptocurrencies]
+      summary: Create a cryptocurrency to track
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CryptocurrencyCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Cryptocurrency'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/cryptocurrencies/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    get:
+      tags: [Cryptocurrencies]
+      summary: Get cryptocurrency by id
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cryptocurrency
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Cryptocurrency'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Cryptocurrencies]
+      summary: Update cryptocurrency
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CryptocurrencyUpdate'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Cryptocurrency'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags: [Cryptocurrencies]
+      summary: Delete cryptocurrency and its price history
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/cryptocurrencies/{id}/prices:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: from
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: to
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+      - in: query
+        name: offset
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+    get:
+      tags: [Prices]
+      summary: Price history for a cryptocurrency
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Paginated history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PriceRecord'
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/prices/latest:
+    get:
+      tags: [Prices]
+      summary: Latest prices for tracked cryptocurrencies
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: symbols
+          description: Comma-separated list of symbols to filter, e.g. BTC,ETH
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Latest prices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LatestPrice'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/sync:
+    post:
+      tags: [Sync]
+      summary: Manually trigger a synchronization with CoinMarketCap
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Sync result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SyncResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '502':
+          $ref: '#/components/responses/ExternalApiError'

@@ -1,0 +1,11 @@
+﻿node_modules
+dist
+coverage
+data
+.git
+.gitignore
+.idea
+.env
+*.log
+requests.http
+README.md

@@ -1,4 +1,8 @@
 ﻿import express, { Application } from 'express';
+import { cryptoRouter } from './modules/cryptocurrencies/routes';
+import { pricesRouter } from './modules/prices/routes';
+import { syncRouter } from './modules/sync/routes';
+import { createDocsRouter } from './docs/router';
 import { AppError } from './utils/errors';
 
 export function createApp(): Application {
@@ -9,6 +13,11 @@ export function createApp(): Application {
     app.get('/health', (_req, res) => {
         res.status(200).json({ status: 'ok' });
     });
+
+    app.use('/api/cryptocurrencies', cryptoRouter);
+    app.use('/api/prices', pricesRouter);
+    app.use('/api/sync', syncRouter);
+    app.use(createDocsRouter());
 
     app.use((_req, res) => {
         res.status(404).json({
