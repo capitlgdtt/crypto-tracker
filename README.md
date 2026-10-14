@@ -2,7 +2,7 @@
 
 Backend-сервис для отслеживания и агрегации цен криптовалют через CoinMarketCap API.
 
-Сервис предоставляет REST API для управления списком отслеживаемых криптовалют, получения актуальных и исторических цен, а также выполняет фоновую синхронизацию с CoinMarketCap. Написан на TypeScript поверх Express и SQLite (raw SQL, без ORM).
+Сервис предоставляет REST API для управления списком отслеживаемых криптовалют, получения актуальных и исторических цен, а также выполняет фоновую синхронизацию с CoinMarketCap. Написан на TypeScript поверх Express и SQLite.
 
 ## Возможности
 
@@ -22,7 +22,7 @@ Backend-сервис для отслеживания и агрегации це�
 - Node.js 18+
 - Express.js
 - TypeScript
-- SQLite через `better-sqlite3` (raw SQL, без ORM)
+- SQLite через `better-sqlite3`
 - Jest + Supertest
 - Swagger (OpenAPI 3.0)
 - axios
@@ -31,7 +31,7 @@ Backend-сервис для отслеживания и агрегации це�
 
 - Node.js 18 или новее
 - npm
-- API-ключ CoinMarketCap (бесплатного тарифа достаточно): https://coinmarketcap.com/api/
+- API-ключ CoinMarketCap: https://coinmarketcap.com/api/
 
 ## Локальный запуск
 
@@ -76,7 +76,7 @@ Backend-сервис для отслеживания и агрегации це�
 
 ## Обзор API
 
-Все `/api/*` эндпоинты требуют заголовок `Authorization: Bearer <API_KEY>`, где `API_KEY` — значение из `.env`.
+Все `/api/*` эндпоинты требуют заголовок `Authorization: Bearer <API_KEY>`, где `API_KEY` - значение из `.env`.
 
 | Метод | Путь | Описание |
 | --- | --- | --- |
@@ -87,7 +87,7 @@ Backend-сервис для отслеживания и агрегации це�
 | PATCH | `/api/cryptocurrencies/:id` | Обновить криптовалюту |
 | DELETE | `/api/cryptocurrencies/:id` | Удалить криптовалюту (вместе с историей) |
 | GET | `/api/cryptocurrencies/:id/prices` | История цен (`from`, `to`, `limit`, `offset`) |
-| GET | `/api/prices/latest` | Последние цены (`symbols` — опциональный фильтр) |
+| GET | `/api/prices/latest` | Последние цены (`symbols` - опциональный фильтр) |
 | POST | `/api/sync` | Ручной запуск синхронизации |
 | GET | `/openapi.json` | OpenAPI 3.0 спецификация |
 | GET | `/api-docs` | Swagger UI |
@@ -123,7 +123,7 @@ docker compose up --build
 docker compose down -v
 ```
 
-Переменные окружения читаются из `.env` в корне проекта (Docker Compose загружает его автоматически). Не коммитьте `.env`.
+Переменные окружения читаются из `.env` в корне проекта.
 
 ## Тесты
 
@@ -156,7 +156,6 @@ src/
 
 ## Замечания
 
-- `better-sqlite3` используется строго как драйвер SQLite. Все запросы — raw SQL, ORM нет.
+- `better-sqlite3` используется строго как драйвер SQLite. Все запросы - raw SQL, ORM нет.
 - API-ключ CoinMarketCap и API-ключ сервиса не хранятся в коде и не отдаются клиенту.
 - Все внешние HTTP-запросы имеют таймаут (`CMC_TIMEOUT_MS`).
-- Файл базы SQLite исключён из системы контроля версий через `.gitignore`.
